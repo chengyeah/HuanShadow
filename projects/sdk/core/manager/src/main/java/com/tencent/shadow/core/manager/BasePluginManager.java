@@ -26,6 +26,7 @@ import android.util.Pair;
 
 import com.tencent.shadow.core.common.Logger;
 import com.tencent.shadow.core.common.LoggerFactory;
+import com.tencent.shadow.core.common.PluginInfo;
 import com.tencent.shadow.core.manager.installplugin.AppCacheFolderManager;
 import com.tencent.shadow.core.manager.installplugin.CopySoBloc;
 import com.tencent.shadow.core.manager.installplugin.InstallPluginException;
@@ -322,6 +323,49 @@ public abstract class BasePluginManager {
         return mInstalledDao.getLatestPlugins(limit);
     }
 
+    /**
+     * 获取插件的所有版本
+     * @param  uuid 一组插件uuid
+     * @param partKey 插件的表示
+     *
+     */
+    public final List<Map<String, String>> getPluginVersions(String uuid, String partKey) {
+        return mInstalledDao.getPluginVersions(uuid, partKey);
+    }
+
+    public PluginInfo getInstalledPluginInfo(String uuid, String partKey) {
+        return mInstalledDao.getInstalledPluginInfo(uuid, partKey);
+    }
+
+    /**
+     * 删除指定uuid的插件
+     *
+     * @param uuid 插件包的uuid
+     * @return 是否全部执行成功
+     */
+    public boolean deleteInstalledPlugin4PartKey(String uuid, String partKey) {
+        InstalledPlugin installedPlugin = mInstalledDao.getInstalledPluginByUUID(uuid);
+        boolean suc = true;
+
+        for (Map.Entry<String, InstalledPlugin.PluginPart> plugin : installedPlugin.plugins.entrySet()) {
+            if (plugin.getKey().equals(partKey)) {
+                if (!deletePart(plugin.getValue())) {
+                    suc = false;
+                }
+            }
+        }
+        List<String> filePaths = mInstalledDao.getPluginFilePath(uuid, partKey);
+        for (String filePath : filePaths) {
+            System.out.println("filePath = " + filePath);
+            deleteFile(new File(filePath).getParentFile().getParentFile());
+        }
+
+        if (mInstalledDao.deleteByPartKey(uuid, partKey) <= 0) {
+            suc = false;
+        }
+
+        return suc;
+    }
 
     /**
      * 删除指定uuid的插件
@@ -351,6 +395,52 @@ public abstract class BasePluginManager {
             suc = false;
         }
         return suc;
+    }
+
+    /**
+     * 删除指定uuid的插件
+     *
+     * @param uuid 插件包的uuid
+     * @return 是否全部执行成功
+     */
+    public boolean deleteInstalledPlugin(String uuid, String partKey, String version, String filePath) {
+        boolean suc = true;
+        if (filePath.isEmpty()) {
+            return false;
+        }
+        File root = new File(filePath).getParentFile().getParentFile();
+        deleteFile(root);
+
+        if (mInstalledDao.deleteByPartKey(uuid, partKey, version) <= 0) {
+            suc = false;
+        }
+
+        return suc;
+    }
+
+    public static void deleteFile(File file) {
+        //判断文件不为null或文件目录存在
+        if (file == null || !file.exists()) {
+            if (mLogger.isDebugEnabled()) {
+                mLogger.debug("文件删除失败, 请检查文件路径是否正确");
+            }
+            return;
+        }
+        //取得这个目录下的所有子文件对象
+        File[] files = file.listFiles();
+        //遍历该目录下的文件对象
+        if (files != null) {
+            for (File f : files) {
+                //判断子目录是否存在子目录,如果是文件则删除
+                if (f.isDirectory()) {
+                    deleteFile(f);
+                } else {
+                    f.delete();
+                }
+            }
+        }
+        //删除空文件夹 for循环已经把上一层节点的目录清空。
+        file.delete();
     }
 
     private boolean deletePart(InstalledPlugin.Part part) {

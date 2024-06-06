@@ -110,4 +110,22 @@ public abstract class PluginManagerThatUseDynamicLoader extends BaseDynamicPlugi
             mPluginLoader = new BinderPluginLoader(iBinder);
         }
     }
+
+    public final boolean isLoadBasePlugin()  throws RemoteException {
+        if (mLogger.isInfoEnabled()) {
+            mLogger.info("isLoadBasePlugin mPpsController:" + mPpsController);
+        }
+        if (mPpsController != null) {
+            PpsStatus ppsStatus = mPpsController.getPpsStatus();
+            return ppsStatus.runtimeLoaded || ppsStatus.loaderLoaded;
+        } else {
+            return false;
+        }
+    }
+
+    public final void exit() throws RemoteException{
+        if (mPpsController != null) {
+            mPpsController.exit();
+        }
+    }
 }

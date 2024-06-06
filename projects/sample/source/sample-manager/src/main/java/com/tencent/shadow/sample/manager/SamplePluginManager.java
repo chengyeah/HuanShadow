@@ -29,8 +29,11 @@ import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 
+import com.tencent.shadow.core.common.PluginInfo;
 import com.tencent.shadow.core.manager.installplugin.InstalledPlugin;
 import com.tencent.shadow.dynamic.host.EnterCallback;
+import com.tencent.shadow.dynamic.host.OnBooleanCallback;
+import com.tencent.shadow.dynamic.host.OnInstalledPluginListener;
 import com.tencent.shadow.sample.constant.Constant;
 
 import java.util.concurrent.ExecutorService;
@@ -86,6 +89,31 @@ public class SamplePluginManager extends FastPluginManager {
         } else {
             throw new IllegalArgumentException("不认识的fromId==" + fromId);
         }
+    }
+
+    @Override
+    public void unInstall(Context context, String uuid, String partKey) {
+
+    }
+
+    @Override
+    public void getAllPlugins(Context context, Bundle bundle, OnInstalledPluginListener listener) {
+
+    }
+
+    @Override
+    public void delPlugin(Context context, Bundle bundle, OnBooleanCallback callback) {
+
+    }
+
+    @Override
+    public boolean checkPluginState(Context context, Bundle bundle) {
+        return false;
+    }
+
+    @Override
+    public PluginInfo getPlugin(Context context, String uuid, String partKey) {
+        return null;
     }
 
     private void loadViewToHost(final Context context, Bundle bundle) {

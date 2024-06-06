@@ -23,12 +23,15 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.tencent.shadow.core.common.PluginInfo;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -71,6 +74,43 @@ public class InstalledDao {
     }
 
     /**
+     * 获取指定插件的filePath
+     *
+     * @return 插件version列表数据
+     */
+    public List<String> getPluginFilePath(String UUid, String partKey) {
+        SQLiteDatabase db = mDBHelper.getReadableDatabase();
+        List<String> paths = new ArrayList<>();
+        Cursor cursor = null;
+        // 查询type为plugin、指定partkey的行，按version倒序
+        try {
+            cursor = db.query(
+                    InstalledPluginDBHelper.TABLE_NAME_MANAGER,
+                    new String[]{InstalledPluginDBHelper.COLUMN_PATH},
+                    (InstalledPluginDBHelper.COLUMN_TYPE + " = ? and " +
+                            InstalledPluginDBHelper.COLUMN_UUID + " = ? and " +
+                            InstalledPluginDBHelper.COLUMN_PARTKEY + " = ? "),
+                    new String[]{String.valueOf(InstalledType.TYPE_PLUGIN), UUid, partKey},
+                    InstalledPluginDBHelper.COLUMN_PATH,
+                    null,
+                    InstalledPluginDBHelper.COLUMN_ID + " DESC"
+            );
+            while (cursor.moveToNext()) {
+                String filePath = cursor.getString(cursor.getColumnIndex(InstalledPluginDBHelper.COLUMN_PATH));
+                paths.add(filePath);
+            }
+            cursor.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return paths;
+    }
+
+    /**
      * 删除UUID相关的数据
      *
      * @param UUID 插件的发布id
@@ -87,6 +127,90 @@ public class InstalledDao {
             db.endTransaction();
         }
         return row;
+    }
+
+    /**
+     * 删除指定行
+     * @param UUID
+     * @param partKey
+     * @return
+     */
+    public int deleteByPartKey(String UUID, String partKey) {
+        int row;
+        SQLiteDatabase db = mDBHelper.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            row = db.delete(InstalledPluginDBHelper.TABLE_NAME_MANAGER, InstalledPluginDBHelper.COLUMN_UUID + " =? and " + InstalledPluginDBHelper.COLUMN_PARTKEY + " =? ", new String[]{UUID, partKey});
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+        return row;
+    }
+
+    /**
+     * 删除指定行
+     *
+     * @param UUID
+     * @param partKey
+     * @param version
+     * @return
+     */
+    public int deleteByPartKey(String UUID, String partKey, String version) {
+        int row;
+        SQLiteDatabase db = mDBHelper.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            row = db.delete(InstalledPluginDBHelper.TABLE_NAME_MANAGER, InstalledPluginDBHelper.COLUMN_UUID + " =? and " + InstalledPluginDBHelper.COLUMN_PARTKEY + " =? and " + InstalledPluginDBHelper.COLUMN_VERSION + " =?", new String[]{UUID, partKey, version});
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+        return row;
+    }
+
+    /**
+     * 查询已安装插件信息
+     * @param uuid uuid
+     * @param partKey partKey
+     * @return PluginInfo
+     */
+    @SuppressLint("Range")
+    public PluginInfo getInstalledPluginInfo(String uuid, String partKey){
+        SQLiteDatabase db = mDBHelper.getReadableDatabase();
+        PluginInfo pluginInfo = new PluginInfo();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    InstalledPluginDBHelper.TABLE_NAME_MANAGER,
+                    new String[]{InstalledPluginDBHelper.COLUMN_VERSION,
+                            InstalledPluginDBHelper.COLUMN_HASH},
+                    (InstalledPluginDBHelper.COLUMN_TYPE + " = ? and " +
+                            InstalledPluginDBHelper.COLUMN_UUID + " = ? and " +
+                            InstalledPluginDBHelper.COLUMN_PARTKEY + " = ? "),
+                    new String[]{String.valueOf(InstalledType.TYPE_PLUGIN), uuid, partKey},
+                    null,
+                    null,
+                    InstalledPluginDBHelper.COLUMN_ID + " DESC",
+                    Integer.toString(1)
+            );
+            while (cursor.moveToNext()) {
+                String version = cursor.getString(cursor.getColumnIndex(InstalledPluginDBHelper.COLUMN_VERSION));
+                String hash = cursor.getString(cursor.getColumnIndex(InstalledPluginDBHelper.COLUMN_HASH));
+                pluginInfo.setVersion(version);
+                pluginInfo.setHash(hash);
+                pluginInfo.setUuId(uuid);
+                pluginInfo.setPartKey(partKey);
+            }
+            cursor.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return pluginInfo;
     }
 
     /**
@@ -202,6 +326,42 @@ public class InstalledDao {
             installedPlugins.add(getInstalledPluginByUUID(uuid));
         }
         return installedPlugins;
+    }
+
+    public List<Map<String, String>> getPluginVersions(String UUid, String partKey) {
+        SQLiteDatabase db = mDBHelper.getReadableDatabase();
+        List<Map<String, String>> versions = new ArrayList<>();
+        Cursor cursor = null;
+        // 查询type为plugin、指定partkey的行，按version倒序
+        try {
+            cursor = db.query(
+                    InstalledPluginDBHelper.TABLE_NAME_MANAGER,
+                    new String[]{InstalledPluginDBHelper.COLUMN_VERSION,
+                            InstalledPluginDBHelper.COLUMN_PATH},
+                    (InstalledPluginDBHelper.COLUMN_TYPE + " = ? and " +
+                            InstalledPluginDBHelper.COLUMN_UUID + " = ? and " +
+                            InstalledPluginDBHelper.COLUMN_PARTKEY + " = ? "),
+                    new String[]{String.valueOf(InstalledType.TYPE_PLUGIN), UUid, partKey},
+                    InstalledPluginDBHelper.COLUMN_VERSION,
+                    null,
+                    InstalledPluginDBHelper.COLUMN_ID + " DESC"
+            );
+            while (cursor.moveToNext()) {
+                Map<String, String> value = new HashMap<>();
+                String version = cursor.getString(cursor.getColumnIndex(InstalledPluginDBHelper.COLUMN_VERSION));
+                String filePath = cursor.getString(cursor.getColumnIndex(InstalledPluginDBHelper.COLUMN_PATH));
+                value.put(version, filePath);
+                versions.add(value);
+            }
+            cursor.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return versions;
     }
 
     private List<ContentValues> parseConfig(PluginConfig pluginConfig,

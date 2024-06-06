@@ -75,6 +75,13 @@ public interface PluginManifest {
         public ActivityInfo(String className,
                             int theme,
                             int configChanges,
+                            int softInputMode) {
+            this(className, theme, configChanges, softInputMode, 1);
+        }
+
+        public ActivityInfo(String className,
+                            int theme,
+                            int configChanges,
                             int softInputMode,
                             int screenOrientation) {
             super(className);

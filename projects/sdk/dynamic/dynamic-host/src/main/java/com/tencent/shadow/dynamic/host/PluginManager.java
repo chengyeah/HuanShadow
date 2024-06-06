@@ -21,6 +21,8 @@ package com.tencent.shadow.dynamic.host;
 import android.content.Context;
 import android.os.Bundle;
 
+import com.tencent.shadow.core.common.PluginInfo;
+
 /**
  * 使用方持有的接口
  *
@@ -35,4 +37,39 @@ public interface PluginManager {
      * @param callback 用于从PluginManager实现中返回View
      */
     void enter(Context context, long fromId, Bundle bundle, EnterCallback callback);
+
+    /**
+     * 卸载插件
+     * @param uuid
+     * @param partKey
+     */
+    void unInstall(Context context, String uuid, String partKey);
+
+    /**
+     * 查询已安装插件
+     * @param context
+     * @param bundle
+     * @param listener
+     */
+    void getAllPlugins(Context context, Bundle bundle, OnInstalledPluginListener listener);
+
+    /**
+     * 删除插件
+     * @param context
+     * @param bundle
+     * @param callback
+     */
+    void delPlugin(Context context, Bundle bundle, OnBooleanCallback callback);
+
+    /**
+     * 检查插件是否已经加载
+     * @param context
+     * @param bundle
+     * @return
+     */
+    boolean checkPluginState(Context context, Bundle bundle);
+
+
+    PluginInfo getPlugin(Context context, String uuid, String partKey);
+
 }

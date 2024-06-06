@@ -45,6 +45,7 @@ private class PluginManifestBuilder(val manifestMap: ManifestMap) {
             buildReceiverInfoArrayField(),
             buildProviderInfoArrayField(),
         ).forEach { fieldSpec ->
+            print("--==>${fieldSpec.name}")
             val getterMethod = buildGetterMethod(fieldSpec)
             classBuilder.addField(fieldSpec)
             classBuilder.addMethod(getterMethod)
@@ -152,7 +153,24 @@ private class PluginManifestBuilder(val manifestMap: ManifestMap) {
                 Modifier.FINAL,
             )
             .returns(fieldSpec.type)
-            .addStatement(CodeBlock.of("return ${fieldSpec.name}"))
+//            .addStatement(CodeBlock.of("return ${fieldSpec.name}"))
+            .addStatement(
+                CodeBlock.of(
+                    if (fieldSpec.name == "applicationPackageName") {
+                        "try {\n" +
+                                "     Class<?> aClass = Class.forName(\"com.extscreen.runtime.HuanShadow\");\n" +
+                                "     java.lang.reflect.Method getHostPackageName = aClass.getDeclaredMethod(\"getHostPackageName\");\n" +
+                                "     getHostPackageName.setAccessible(true);\n" +
+                                "     return (java.lang.String) getHostPackageName.invoke(null);\n" +
+                                "} catch (Throwable t) {\n" +
+                                "     t.printStackTrace();\n" +
+                                "}\n" +
+                                "return ${fieldSpec.name}"
+                    } else {
+                        "return ${fieldSpec.name}"
+                    }
+                )
+            )
             .build()
 
     private fun buildResIdField(fieldName: String, key: String): FieldSpec {

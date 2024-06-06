@@ -20,7 +20,7 @@ allprojects {
     } else if ("${System.env.CI}".equalsIgnoreCase("true")) {
         versionSuffix = "-${System.env.GITHUB_SHA_SHORT}-SNAPSHOT"
     } else {
-        versionSuffix = "-${gitShortRev()}-SNAPSHOT"
+        versionSuffix = "-${gitShortRev()}-SNAPSHOT-1.0.0"
     }
     ext.ARTIFACT_VERSION = versionName + versionSuffix
     ext.TEST_HOST_APP_APPLICATION_ID = 'com.tencent.shadow.test.hostapp'

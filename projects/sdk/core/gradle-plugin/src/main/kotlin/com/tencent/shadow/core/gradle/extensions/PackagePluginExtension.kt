@@ -1,23 +1,6 @@
-/*
- * Tencent is pleased to support the open source community by making Tencent Shadow available.
- * Copyright (C) 2019 THL A29 Limited, a Tencent company.  All rights reserved.
- *
- * Licensed under the BSD 3-Clause License (the "License"); you may not use
- * this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- *     https://opensource.org/licenses/BSD-3-Clause
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 package com.tencent.shadow.core.gradle.extensions
 
+import com.android.build.gradle.internal.dsl.BaseAppModuleExtension
 import com.tencent.shadow.core.gradle.ShadowPluginHelper
 import groovy.lang.Closure
 import org.gradle.api.NamedDomainObjectContainer
@@ -42,6 +25,8 @@ open class PackagePluginExtension {
     var compactVersion: Array<Int> = emptyArray()
 
     var buildTypes: NamedDomainObjectContainer<PluginBuildType>
+
+    var channel = ""
 
     constructor(project: Project) {
         buildTypes = project.container(PluginBuildType::class.java)
@@ -126,10 +111,12 @@ open class PackagePluginExtension {
                 json["UUID"] = uuidFile.readText()
                 project.logger.info("uuid = " + json["UUID"] + " 由文件生成")
             }
+
             this.uuid.isEmpty() -> {
                 json["UUID"] = UUID.randomUUID().toString().toUpperCase()
                 project.logger.info("uuid = " + json["UUID"] + " 随机生成")
             }
+
             else -> {
                 json["UUID"] = this.uuid
                 project.logger.info("uuid = " + json["UUID"] + " 由配置生成")
@@ -149,6 +136,32 @@ open class PackagePluginExtension {
             }
             json["compact_version"] = jsonArray
         }
+
+        addCustomPrams(project, json)
+
         return json
+    }
+
+    private fun addCustomPrams(project: Project, json: JSONObject) {
+        val android = project.extensions.findByName("android") as BaseAppModuleExtension
+        val additionalParameters = android.aaptOptions.additionalParameters
+
+        val pluginPackage = android.productFlavors.getByName("plugin").applicationId
+        val pluginResId =
+            if (additionalParameters.contains("--package-id")) additionalParameters.let {
+                additionalParameters[additionalParameters.indexOf("--package-id") + 1]
+            } else "0x7F"
+        val customFlag = project.extensions.extraProperties.get("PLUGIN_FLAG")
+        json["huan"] = JSONObject().apply {
+            put("partKey", ((json["plugins"] as JSONArray)[0] as JSONObject)["partKey"])
+            put("hostPkg", pluginPackage)
+            put("uuid", json["UUID"])
+            put("resId", pluginResId)
+            put("vern", json["UUID_NickName"])
+            put("verc", json["version"])
+            put("channel", channel)
+            put("flag", customFlag)
+        }
+
     }
 }

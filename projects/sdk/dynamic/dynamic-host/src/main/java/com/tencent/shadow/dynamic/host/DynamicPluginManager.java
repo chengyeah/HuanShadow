@@ -24,6 +24,7 @@ import android.text.TextUtils;
 
 import com.tencent.shadow.core.common.Logger;
 import com.tencent.shadow.core.common.LoggerFactory;
+import com.tencent.shadow.core.common.PluginInfo;
 
 import java.io.File;
 
@@ -52,6 +53,31 @@ public final class DynamicPluginManager implements PluginManager {
         updateManagerImpl(context);
         mManagerImpl.enter(context, fromId, bundle, callback);
         mUpdater.update();
+    }
+
+    @Override
+    public void unInstall(Context context, String uuid, String partKey) {
+
+    }
+
+    @Override
+    public void getAllPlugins(Context context, Bundle bundle, OnInstalledPluginListener listener) {
+
+    }
+
+    @Override
+    public void delPlugin(Context context, Bundle bundle, OnBooleanCallback callback) {
+
+    }
+
+    @Override
+    public boolean checkPluginState(Context context, Bundle bundle) {
+        return false;
+    }
+
+    @Override
+    public PluginInfo getPlugin(Context context, String uuid, String partKey) {
+        return null;
     }
 
     public void release() {
